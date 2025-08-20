@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "694380235270",
+    "project_id": "tools-tracker-globe",
+    "storage_bucket": "tools-tracker-globe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:694380235270:android:88825a7acd33c3c696d187",
+        "android_client_info": {
+          "package_name": "com.example.tools_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZamhTYd2ccLnugcg2f0cY1JABIyzjDSA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:694380235270:android:e112932638ab094e96d187",
+        "android_client_info": {
+          "package_name": "com.example.toolschecklist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZamhTYd2ccLnugcg2f0cY1JABIyzjDSA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
