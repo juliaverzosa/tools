@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'home.dart';
 import '/screens/tools_checklist.dart';
 import '/screens/add_tech.dart';
@@ -15,6 +16,13 @@ class TechnicianListScreen extends StatefulWidget {
 
 class _TechnicianListScreenState extends State<TechnicianListScreen> {
   String searchQuery = "";
+  bool sortAZ = true; // controls A-Z or Z-A
+
+  String formatDate(Timestamp? timestamp) {
+    if (timestamp == null) return "Not yet";
+    final dt = timestamp.toDate();
+    return DateFormat("MMMM d, yyyy h:mm a").format(dt);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,20 +32,24 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Section
+            // Header
             Container(
               color: const Color(0xFF062481),
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Technicians",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold)),
+                  const Text(
+                    "Technicians",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 12),
-                  // Search Bar
+
+                  // Search bar
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
@@ -60,11 +72,12 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
                               });
                             },
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 12),
+
                   // Buttons Row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -74,13 +87,18 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
                           backgroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                         ),
                         onPressed: () {
-                          setState(() {}); // Firestore query already sorted if needed
+                          setState(() {
+                            sortAZ = !sortAZ;
+                          });
                         },
-                        child: const Text("A → Z",
-                            style: TextStyle(color: Color(0xFF062481))),
+                        child: Text(
+                          sortAZ ? "A → Z" : "Z → A",
+                          style: const TextStyle(color: Color(0xFF062481)),
+                        ),
                       ),
                       OutlinedButton(
                         style: OutlinedButton.styleFrom(
@@ -88,49 +106,52 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
                           side: const BorderSide(color: Colors.white),
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                         ),
                         onPressed: () async {
                           final result = await Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => const AddTechnicianPage(),
-                            ),
+                            MaterialPageRoute(builder: (_) => const AddTechnicianPage()),
                           );
-                          if (result == true) setState(() {}); // refresh after add
+                          if (result == true) setState(() {});
                         },
                         child: const Text("Add"),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
 
-            // Technician List from Firestore
+            // Technician List
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('technicians')
-                    .orderBy('name')
+                    .orderBy('lastChecked', descending: true) // ✅ recent first
                     .snapshots(),
                 builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return const Center(child: Text("Error loading technicians"));
-                  }
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (snapshot.hasError) return const Center(child: Text("Error loading technicians"));
+                  if (!snapshot.hasData || snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
+                  // Filter + case-insensitive sort
                   final docs = snapshot.data!.docs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     final name = (data['name'] ?? '').toString().toLowerCase();
                     return name.contains(searchQuery);
                   }).toList();
 
-                  if (docs.isEmpty) {
-                    return const Center(child: Text("No technicians found"));
-                  }
+                  // ✅ Case-insensitive alphabetical sort applied AFTER recent order
+                  docs.sort((a, b) {
+                    final nameA = (a['name'] ?? '').toString().toLowerCase();
+                    final nameB = (b['name'] ?? '').toString().toLowerCase();
+                    return sortAZ ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+                  });
+
+                  if (docs.isEmpty) return const Center(child: Text("No technicians found"));
 
                   return ListView.builder(
                     padding: const EdgeInsets.all(16),
@@ -153,57 +174,55 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
                                     Text(
                                       data['name'] ?? '',
                                       style: const TextStyle(
-                                          fontSize: 15, fontWeight: FontWeight.w600),
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      "Last checked: ${data['lastChecked'] != null ? data['lastChecked'].toDate().toString() : "Not yet"}",
+                                      "Last checked: ${formatDate(data['lastChecked'])}",
                                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                                     ),
                                   ],
                                 ),
                               ),
-PopupMenuButton<String>(
-  onSelected: (value) async {
-    if (value == 'view') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => TechnicianDetailsPage(
-            technician: data,
-          ),
-        ),
-      );
-    } else if (value == 'edit') {
-      // ✅ Pass Firestore document ID + fields to EditTechnicianPage
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => EditTechnicianPage(
-            id: id, // Firestore doc ID
-            name: data['name'] ?? '',
-            email: data['email'] ?? '',
-            phone: data['contact'] ?? '',
-            address: data['specialty'] ?? '',
-          ),
-        ),
-      ).then((result) {
-        if (result == true) setState(() {}); // refresh after edit
-      });
-    } else if (value == 'delete') {
-      await FirebaseFirestore.instance
-          .collection('technicians')
-          .doc(id)
-          .delete();
-    }
-  },
-  itemBuilder: (context) => const [
-    PopupMenuItem(value: 'view', child: Text('View')),
-    PopupMenuItem(value: 'edit', child: Text('Edit')),
-    PopupMenuItem(value: 'delete', child: Text('Delete')),
-  ],
-),
-
+                              PopupMenuButton<String>(
+                                onSelected: (value) async {
+                                  if (value == 'view') {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => TechnicianDetailsPage(
+                                          technicianId: id,
+                                        ),
+                                      ),
+                                    );
+                                  } else if (value == 'edit') {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => EditTechnicianPage(
+                                          id: id,
+                                          name: data['name'] ?? '',
+                                          cluster: data['cluster'] ?? '',
+                                        ),
+                                      ),
+                                    ).then((result) {
+                                      if (result == true) setState(() {});
+                                    });
+                                  } else if (value == 'delete') {
+                                    await FirebaseFirestore.instance
+                                        .collection('technicians')
+                                        .doc(id)
+                                        .delete();
+                                  }
+                                },
+                                itemBuilder: (context) => const [
+                                  PopupMenuItem(value: 'view', child: Text('View')),
+                                  PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                  PopupMenuItem(value: 'delete', child: Text('Delete')),
+                                ],
+                              ),
                             ],
                           ),
                           const SizedBox(height: 6),
@@ -212,24 +231,25 @@ PopupMenuButton<String>(
                               backgroundColor: Colors.blue.shade100,
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20)),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                             ),
                             onPressed: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => ToolsScreen(
-                                          technicianId: id, // ✅ Firestore doc ID
-      technicianName: data['name'] ?? '',
-      lastChecked: data['lastChecked'] != null
-          ? data['lastChecked'].toDate().toString()
-          : "Not yet",
+                                    technicianId: id,
+                                    technicianName: data['name'] ?? '',
+                                    lastChecked: formatDate(data['lastChecked']),
                                   ),
                                 ),
                               );
                             },
-                            child: const Text("Tools",
-                                style: TextStyle(color: Color(0xFF062481))),
+                            child: const Text(
+                              "Tools",
+                              style: TextStyle(color: Color(0xFF062481)),
+                            ),
                           ),
                           const Divider(height: 20),
                         ],
@@ -238,7 +258,7 @@ PopupMenuButton<String>(
                   );
                 },
               ),
-            )
+            ),
           ],
         ),
       ),

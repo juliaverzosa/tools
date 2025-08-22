@@ -4,17 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class EditTechnicianPage extends StatefulWidget {
   final String id; // Firestore document ID
   final String name;
-  final String email;
-  final String phone;
-  final String address;
+  final String cluster;
 
   const EditTechnicianPage({
     Key? key,
     required this.id,
     required this.name,
-    required this.email,
-    required this.phone,
-    required this.address,
+    required this.cluster,
   }) : super(key: key);
 
   @override
@@ -25,17 +21,21 @@ class _EditTechnicianPageState extends State<EditTechnicianPage> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _nameController;
-  late TextEditingController _emailController;
-  late TextEditingController _phoneController;
-  late TextEditingController _specialtyController;
+  String? _selectedCluster; // for dropdown
+
+  final List<String> _clusters = ["Davao North", "Davao South"];
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.name);
-    _emailController = TextEditingController(text: widget.email);
-    _phoneController = TextEditingController(text: widget.phone);
-    _specialtyController = TextEditingController(text: widget.address);
+
+    // Only set _selectedCluster if it matches allowed values
+    if (_clusters.contains(widget.cluster)) {
+      _selectedCluster = widget.cluster;
+    } else {
+      _selectedCluster = null;
+    }
   }
 
   Future<void> _updateTechnician() async {
@@ -46,9 +46,7 @@ class _EditTechnicianPageState extends State<EditTechnicianPage> {
             .doc(widget.id)
             .update({
           'name': _nameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'contact': _phoneController.text.trim(),
-          'specialty': _specialtyController.text.trim(),
+          'cluster': _selectedCluster,
           'updatedAt': FieldValue.serverTimestamp(),
         });
 
@@ -82,30 +80,28 @@ class _EditTechnicianPageState extends State<EditTechnicianPage> {
           key: _formKey,
           child: ListView(
             children: [
+              // Name input
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Name'),
                 validator: (value) =>
                     value!.isEmpty ? 'Please enter a name' : null,
               ),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
+              const SizedBox(height: 16),
+
+              // Cluster dropdown
+              DropdownButtonFormField<String>(
+                value: _selectedCluster,
+                items: _clusters
+                    .map((cluster) =>
+                        DropdownMenuItem(value: cluster, child: Text(cluster)))
+                    .toList(),
+                onChanged: (value) => setState(() => _selectedCluster = value),
+                decoration: const InputDecoration(labelText: "Cluster"),
                 validator: (value) =>
-                    value!.isEmpty ? 'Please enter an email' : null,
+                    value == null ? 'Please select a cluster' : null,
               ),
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter a phone number' : null,
-              ),
-              TextFormField(
-                controller: _specialtyController,
-                decoration: const InputDecoration(labelText: 'Specialty'),
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter a specialty' : null,
-              ),
+
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _updateTechnician,

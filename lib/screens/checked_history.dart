@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import '/screens/tech_details.dart'; // ✅ import your technician details page
 
 class AllCheckedHistoryPage extends StatelessWidget {
-  final List<Map<String, dynamic>> allChecks;
+  const AllCheckedHistoryPage({Key? key}) : super(key: key);
 
-  const AllCheckedHistoryPage({Key? key, required this.allChecks}) : super(key: key);
+  // ✅ Helper function to format date
+  String _formatDate(dynamic timestamp) {
+    if (timestamp is Timestamp) {
+      final date = timestamp.toDate();
+      return DateFormat("MMMM dd, yyyy h:mm a").format(date);
+    }
+    return "No date recorded";
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           "All Checked History",
@@ -20,41 +30,87 @@ class AllCheckedHistoryPage extends StatelessWidget {
         ),
         backgroundColor: const Color(0xFF062481),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: allChecks.length,
-        itemBuilder: (context, index) {
-          final check = allChecks[index];
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('technicians')
+            .orderBy('lastChecked', descending: true) // ✅ fetch all
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          // safely read values
-          final time = (check['timestamp'] != null)
-              ? (check['timestamp']).toDate()
-              : null;
+          final allTechs = snapshot.data!.docs
+              .where((doc) =>
+                  (doc.data() as Map<String, dynamic>?)?['lastChecked'] != null)
+              .toList();
 
-          final admin = check['admin'] ?? '';
-          final technician = check['technician'] ?? '';
-          final team = check['team'] ?? '';
+          if (allTechs.isEmpty) {
+            return const Center(child: Text("No checked history found"));
+          }
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "${time != null ? "${time.hour}:${time.minute} ${time.day}/${time.month}/${time.year}" : ''} - $admin",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.black54,
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: allTechs.length,
+            itemBuilder: (context, index) {
+              final doc = allTechs[index];
+              final data = doc.data() as Map<String, dynamic>;
+              final formattedDate = _formatDate(data['lastChecked']);
+              final techName = (data['name'] ?? 'Unknown Technician').toString();
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "• ",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 18,
+                        height: 1.4,
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 🔹 Technician Name (clickable)
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => TechnicianDetailsPage(
+                                    technicianId: doc.id, // 👈 pass ID
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              techName,
+                              style: const TextStyle(
+                                color:  Color(0xFF062481), // clickable but no underline
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          // 🔹 Date & Time
+                          Text(
+                            formattedDate,
+                            style: const TextStyle(
+                              color: Colors.black54,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Text(
-                "$technician - $team",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              const Divider(height: 16),
-            ],
+              );
+            },
           );
         },
       ),

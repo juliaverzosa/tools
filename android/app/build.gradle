@@ -1,37 +1,35 @@
 plugins {
     id "com.android.application"
-    id "kotlin-android"
-    // Flutter Gradle plugin
+    id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
-    // Firebase Google Services plugin
-    id 'com.google.gms.google-services'
+    id "com.google.gms.google-services"
 }
 
 android {
-    namespace = "com.example.tools_tracker"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    namespace "com.example.tools_tracker"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.example.tools_tracker"
+        minSdkVersion flutter.minSdkVersion
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+        minSdkVersion flutter.minSdkVersion
+    }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
-    }
-
-    defaultConfig {
-        applicationId = "com.example.tools_tracker"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        jvmTarget = "1.8"
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            signingConfig signingConfigs.debug
         }
     }
 }
@@ -41,11 +39,8 @@ flutter {
 }
 
 dependencies {
-    // Firebase BoM
-    implementation platform('com.google.firebase:firebase-bom:34.1.0')
-
-    // Example Firebase SDKs
-    implementation 'com.google.firebase:firebase-analytics'
-    implementation 'com.google.firebase:firebase-auth'
-    implementation 'com.google.firebase:firebase-firestore'
+    implementation platform("com.google.firebase:firebase-bom:32.7.2")
+    implementation "com.google.firebase:firebase-analytics"
+    implementation "com.google.firebase:firebase-auth"
+    implementation "com.google.firebase:firebase-firestore"
 }

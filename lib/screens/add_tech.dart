@@ -12,9 +12,7 @@ class _AddTechnicianPageState extends State<AddTechnicianPage> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _specialtyController = TextEditingController();
+  String? _selectedCluster; // store dropdown value
 
   Future<void> _saveTechnician() async {
     if (_formKey.currentState!.validate()) {
@@ -24,9 +22,7 @@ class _AddTechnicianPageState extends State<AddTechnicianPage> {
 
         await docRef.set({
           'name': _nameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'contact': _phoneController.text.trim(),
-          'specialty': _specialtyController.text.trim(),
+          'cluster': _selectedCluster, // ✅ from dropdown
           'active': true,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
@@ -72,24 +68,31 @@ class _AddTechnicianPageState extends State<AddTechnicianPage> {
                 validator: (value) =>
                     value!.isEmpty ? 'Please enter a name' : null,
               ),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
+              const SizedBox(height: 16),
+
+              // Dropdown for Cluster
+              DropdownButtonFormField<String>(
+                value: _selectedCluster,
+                items: const [
+                  DropdownMenuItem(
+                    value: "Davao North",
+                    child: Text("Davao North"),
+                  ),
+                  DropdownMenuItem(
+                    value: "Davao South",
+                    child: Text("Davao South"),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCluster = value;
+                  });
+                },
+                decoration: const InputDecoration(labelText: "Cluster"),
                 validator: (value) =>
-                    value!.isEmpty ? 'Please enter an email' : null,
+                    value == null ? 'Please select a cluster' : null,
               ),
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter a phone number' : null,
-              ),
-              TextFormField(
-                controller: _specialtyController,
-                decoration: const InputDecoration(labelText: 'Specialty'),
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter a specialty' : null,
-              ),
+
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _saveTechnician,
