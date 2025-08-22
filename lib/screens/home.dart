@@ -134,17 +134,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.upload_file),
-              title: const Text("Import File"),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ImportPage()),
-                );
-              },
-            ),
+            // ListTile(
+            //   leading: const Icon(Icons.upload_file),
+            //   title: const Text("Import File"),
+            //   onTap: () {
+            //     Navigator.pop(context);
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (_) => const ImportPage()),
+            //     );
+            //   },
+            // ),
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text("Logout"),
@@ -270,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         final stats = [
                           {'title': 'Technicians', 'value': '$totalTechs'},
                           {
-                            'title': 'Technicians Checked Today',
+                            'title': 'Checked Today',
                             'value': '$checkedToday'
                           },
                           {'title': 'OK Tools (%)', 'value': '$okPercent%'},

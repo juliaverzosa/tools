@@ -24,10 +24,34 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
     return DateFormat("MMMM d, yyyy h:mm a").format(dt);
   }
 
+  Future<bool> _confirmDelete() async {
+    return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Delete'),
+            content: const Text('Are you sure you want to delete this technician?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.white, // ✅ white background
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,7 +153,7 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('technicians')
-                    .orderBy('lastChecked', descending: true) // ✅ recent first
+                    .orderBy('lastChecked', descending: true)
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) return const Center(child: Text("Error loading technicians"));
@@ -144,7 +168,6 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
                     return name.contains(searchQuery);
                   }).toList();
 
-                  // ✅ Case-insensitive alphabetical sort applied AFTER recent order
                   docs.sort((a, b) {
                     final nameA = (a['name'] ?? '').toString().toLowerCase();
                     final nameB = (b['name'] ?? '').toString().toLowerCase();
@@ -187,6 +210,7 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
                                 ),
                               ),
                               PopupMenuButton<String>(
+                                color: Colors.white,
                                 onSelected: (value) async {
                                   if (value == 'view') {
                                     Navigator.push(
@@ -211,10 +235,19 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
                                       if (result == true) setState(() {});
                                     });
                                   } else if (value == 'delete') {
-                                    await FirebaseFirestore.instance
-                                        .collection('technicians')
-                                        .doc(id)
-                                        .delete();
+                                    bool confirm = await _confirmDelete();
+                                    if (confirm) {
+                                      await FirebaseFirestore.instance
+                                          .collection('technicians')
+                                          .doc(id)
+                                          .delete();
+
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Technician deleted successfully'),
+                                        ),
+                                      );
+                                    }
                                   }
                                 },
                                 itemBuilder: (context) => const [
@@ -265,6 +298,7 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
 
       // Bottom Navigation
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
         currentIndex: 1,
         selectedItemColor: const Color(0xFF062481),
         onTap: (index) {

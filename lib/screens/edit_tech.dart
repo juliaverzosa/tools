@@ -66,6 +66,7 @@ class _EditTechnicianPageState extends State<EditTechnicianPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           'Edit Technician',
@@ -109,7 +110,7 @@ class _EditTechnicianPageState extends State<EditTechnicianPage> {
                   backgroundColor: const Color(0xFF062481),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text('Update Technician'),
+                child: const Text('Update Technician', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ],
           ),

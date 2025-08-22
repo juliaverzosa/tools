@@ -42,11 +42,14 @@ class TechnicianDetailsPage extends StatelessWidget {
 
   void _showToolsPopup(BuildContext context, String status, List<String> tools) {
     showDialog(
+      
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: Colors.white, 
         title: Row(
           children: [
             Container(
+              
               width: 12,
               height: 12,
               decoration: BoxDecoration(
@@ -55,7 +58,7 @@ class TechnicianDetailsPage extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text("$status Tools (${tools.length})"),
+            Text("$status (${tools.length})"),
           ],
         ),
         content: SizedBox(

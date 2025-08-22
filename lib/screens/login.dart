@@ -14,6 +14,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true; // ✅ controls show/hide password
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
@@ -106,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 6),
                     TextField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: _obscurePassword, // ✅ toggle
                       decoration: InputDecoration(
                         hintText: "Password",
                         filled: true,
@@ -114,6 +115,16 @@ class _LoginPageState extends State<LoginPage> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(4),
                           borderSide: BorderSide.none,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
                         ),
                       ),
                     ),
@@ -132,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                             ? const CircularProgressIndicator(color: Colors.white)
                             : const Text(
                                 "Log In",
-                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                               ),
                       ),
                     ),

@@ -17,6 +17,7 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _loading = false;
+  bool _obscurePassword = true; // ✅ controls show/hide password
   String? _errorMessage;
 
   Future<void> _signup() async {
@@ -27,20 +28,16 @@ class _SignupPageState extends State<SignupPage> {
 
     try {
       // 1. Create the user in Firebase Auth
-      final userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
+      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
       // 2. Save additional user data in Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
         'name': _nameController.text.trim(),
         'email': _emailController.text.trim(),
-        'role': 'user', // default role, change to 'admin' manually for admins
+        'role': 'user', // default role
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -153,7 +150,7 @@ class _SignupPageState extends State<SignupPage> {
                     const SizedBox(height: 6),
                     TextField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: _obscurePassword, // ✅ toggle
                       decoration: InputDecoration(
                         hintText: "Password",
                         filled: true,
@@ -161,6 +158,16 @@ class _SignupPageState extends State<SignupPage> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(4),
                           borderSide: BorderSide.none,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
                         ),
                       ),
                     ),
@@ -190,22 +197,21 @@ class _SignupPageState extends State<SignupPage> {
                             : const Text(
                                 "Sign Up",
                                 style: TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold),
+                                    fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                               ),
                       ),
                     ),
                     const SizedBox(height: 20),
                     Center(
                       child: TextButton(
-  onPressed: () {
+                        onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (_) => const LoginPage()),
                           );
-  },
-  child: const Text("Already have an account? Log In"),
-),
-
+                        },
+                        child: const Text("Already have an account? Log In"),
+                      ),
                     )
                   ],
                 ),
