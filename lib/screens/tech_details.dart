@@ -122,6 +122,7 @@ class TechnicianDetailsPage extends StatelessWidget {
           style: TextStyle(
               color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
         ),
+         centerTitle: true,
         backgroundColor: const Color(0xFF062481),
       ),
       body: StreamBuilder<DocumentSnapshot>(

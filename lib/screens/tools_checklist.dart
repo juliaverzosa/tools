@@ -28,11 +28,13 @@ class _ToolsScreenState extends State<ToolsScreen> {
     _fetchToolsFromFirebase();
   }
 
-  // Fetch categories and their tools
+  // Fetch categories and their tools ordered by createdAt descending
   Future<void> _fetchToolsFromFirebase() async {
     try {
-      final snapshot =
-          await FirebaseFirestore.instance.collection('tool_categories').get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tool_categories')
+          .orderBy('createdAt', descending: false) // Order by createdAt descending
+          .get();
 
       Map<String, List<String>> data = {};
       for (var doc in snapshot.docs) {
@@ -52,9 +54,34 @@ class _ToolsScreenState extends State<ToolsScreen> {
         loading = false;
       });
     } catch (e) {
-      setState(() => loading = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error fetching tools: $e")));
+      // If ordering by createdAt fails, fall back to unordered fetch
+      try {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('tool_categories')
+            .get();
+
+        Map<String, List<String>> data = {};
+        for (var doc in snapshot.docs) {
+          final categoryName = doc.get('name') as String? ?? 'Unknown';
+          final tools = List<String>.from(doc.get('tools') ?? []);
+          data[categoryName] = tools;
+
+          for (var t in tools) {
+            if (!toolStatus.containsKey(t)) {
+              toolStatus[t] = ""; // initially no status
+            }
+          }
+        }
+
+        setState(() {
+          categories = data;
+          loading = false;
+        });
+      } catch (fallbackError) {
+        setState(() => loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error fetching tools: $fallbackError")));
+      }
     }
   }
 
@@ -93,39 +120,39 @@ class _ToolsScreenState extends State<ToolsScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-SizedBox(
-      width: 40,
-      child: Text(
-        "OK",
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12, color: Colors.green),
-      ),
-    ),
-    SizedBox(
-      width: 45,
-      child: Text(
-        "NONE",
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12, color: Colors.grey),
-      ),
-    ),
-    SizedBox(
-      width: 60,
-      child: Text(
-        "MISSING",
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12, color: Colors.orange),
-      ),
-    ),
-    SizedBox(
-      width: 80,
-      child: Text(
-        "DEFFECTIVE",
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12, color: Colors.red),
-      ),
-    ),
-  ],
+              SizedBox(
+                width: 40,
+                child: Text(
+                  "OK",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.green),
+                ),
+              ),
+              SizedBox(
+                width: 45,
+                child: Text(
+                  "NONE",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ),
+              SizedBox(
+                width: 60,
+                child: Text(
+                  "MISSING",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.orange),
+                ),
+              ),
+              SizedBox(
+                width: 80,
+                child: Text(
+                  "DEFFECTIVE",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.red),
+                ),
+              ),
+            ],
           ),
         ),
         const Divider(height: 1),
@@ -191,8 +218,9 @@ SizedBox(
         title: const Text("Tools",
             style: TextStyle(
                 color: Colors.white,
-                fontSize: 14,
+                fontSize: 18,
                 fontWeight: FontWeight.bold)),
+                
         centerTitle: true,
         leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios),

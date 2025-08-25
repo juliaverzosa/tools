@@ -55,6 +55,7 @@ class _AddTechnicianPageState extends State<AddTechnicianPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
+         centerTitle: true,
         backgroundColor: const Color(0xFF062481),
       ),
       body: Padding(

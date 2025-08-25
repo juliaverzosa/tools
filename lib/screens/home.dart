@@ -6,7 +6,7 @@ import 'tech_list.dart';
 import 'tools_settings.dart';
 import 'checked_history.dart';
 import 'login.dart';
-import 'import_page.dart';
+import 'export_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -80,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // 🔹 Drawer
       endDrawer: Drawer(
+         backgroundColor: Colors.white,
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
@@ -124,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             ListTile(
+              
               leading: const Icon(Icons.settings),
               title: const Text("Manage Tools"),
               onTap: () {
@@ -134,17 +136,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
-            // ListTile(
-            //   leading: const Icon(Icons.upload_file),
-            //   title: const Text("Import File"),
-            //   onTap: () {
-            //     Navigator.pop(context);
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(builder: (_) => const ImportPage()),
-            //     );
-            //   },
-            // ),
+            ListTile(
+              leading: const Icon(Icons.upload_file),
+              title: const Text("Export File"),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ExportPage()),
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text("Logout"),

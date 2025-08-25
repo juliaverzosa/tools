@@ -12,9 +12,11 @@ class _ToolsSettingsPageState extends State<ToolsSettingsPage> {
   final CollectionReference _categoriesCollection =
       FirebaseFirestore.instance.collection('tool_categories');
 
-  // Fetch all categories
+  // Fetch all categories ordered by date added (newest first)
   Future<List<DocumentSnapshot>> _fetchCategories() async {
-    final snapshot = await _categoriesCollection.get();
+    final snapshot = await _categoriesCollection
+        .orderBy('createdAt', descending: false)
+        .get();
     return snapshot.docs;
   }
 
@@ -37,13 +39,34 @@ class _ToolsSettingsPageState extends State<ToolsSettingsPage> {
     );
   }
 
-  // Add a new category
+  Future<bool?> _showDeleteConfirmationDialog(String itemType, String itemName) {
+    return showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text("Delete $itemType"),
+        content: Text("Are you sure you want to delete '$itemName'?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Add a new category with timestamp
   void _addCategory() async {
     final categoryName = await _showTextDialog("New Category");
     if (categoryName != null && categoryName.trim().isNotEmpty) {
       await _categoriesCollection.add({
         'name': categoryName.trim(),
         'tools': [],
+        'createdAt': FieldValue.serverTimestamp(), // Add timestamp
       });
       setState(() {});
     }
@@ -59,8 +82,12 @@ class _ToolsSettingsPageState extends State<ToolsSettingsPage> {
   }
 
   void _deleteCategory(DocumentSnapshot doc) async {
-    await doc.reference.delete();
-    setState(() {});
+    final categoryName = doc.get('name') as String? ?? '';
+    final confirm = await _showDeleteConfirmationDialog("Category", categoryName);
+    if (confirm == true) {
+      await doc.reference.delete();
+      setState(() {});
+    }
   }
 
   void _addTool(DocumentSnapshot categoryDoc) async {
@@ -88,19 +115,24 @@ class _ToolsSettingsPageState extends State<ToolsSettingsPage> {
   }
 
   void _deleteTool(DocumentSnapshot categoryDoc, String tool) async {
-    await categoryDoc.reference.update({
-      'tools': FieldValue.arrayRemove([tool])
-    });
-    setState(() {});
+    final confirm = await _showDeleteConfirmationDialog("Tool", tool);
+    if (confirm == true) {
+      await categoryDoc.reference.update({
+        'tools': FieldValue.arrayRemove([tool])
+      });
+      setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Edit Tools Checklist",
+        title: const Text("Manage Tools",
             style: TextStyle(
                 color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                centerTitle: true,
         backgroundColor: const Color(0xFF062481),
         actions: [
           IconButton(
@@ -132,6 +164,7 @@ class _ToolsSettingsPageState extends State<ToolsSettingsPage> {
                   children: [
                     Text(categoryName),
                     PopupMenuButton<String>(
+                      color: Colors.white, // Explicitly set popup background
                       onSelected: (value) {
                         if (value == 'edit') _editCategory(doc);
                         if (value == 'delete') _deleteCategory(doc);
@@ -139,11 +172,17 @@ class _ToolsSettingsPageState extends State<ToolsSettingsPage> {
                       },
                       itemBuilder: (_) => [
                         const PopupMenuItem(
-                            value: 'add_tool', child: Text("Add Tool")),
+                          value: 'add_tool', 
+                          child: Text("Add Tool"),
+                        ),
                         const PopupMenuItem(
-                            value: 'edit', child: Text("Edit Category")),
+                          value: 'edit', 
+                          child: Text("Edit Category"),
+                        ),
                         const PopupMenuItem(
-                            value: 'delete', child: Text("Delete Category")),
+                          value: 'delete', 
+                          child: Text("Delete Category"),
+                        ),
                       ],
                     )
                   ],
@@ -152,14 +191,20 @@ class _ToolsSettingsPageState extends State<ToolsSettingsPage> {
                   return ListTile(
                     title: Text(tool),
                     trailing: PopupMenuButton<String>(
+                      color: Colors.white, // Explicitly set popup background
                       onSelected: (value) {
                         if (value == 'edit') _editTool(doc, tool);
                         if (value == 'delete') _deleteTool(doc, tool);
                       },
                       itemBuilder: (_) => [
-                        const PopupMenuItem(value: 'edit', child: Text("Edit")),
                         const PopupMenuItem(
-                            value: 'delete', child: Text("Delete")),
+                          value: 'edit', 
+                          child: Text("Edit"),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete', 
+                          child: Text("Delete"),
+                        ),
                       ],
                     ),
                   );

@@ -63,14 +63,17 @@ class _TechnicianListScreenState extends State<TechnicianListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Technicians",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Center(
+  child: const Text(
+    "Technicians",
+    style: TextStyle(
+      color: Colors.white,
+      fontSize: 18,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+),
+                  
                   const SizedBox(height: 12),
 
                   // Search bar

@@ -28,6 +28,7 @@ class AllCheckedHistoryPage extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+         centerTitle: true,
         backgroundColor: const Color(0xFF062481),
       ),
       body: StreamBuilder<QuerySnapshot>(
